@@ -10,6 +10,7 @@ import edu.wpi.first.math.kinematics.DifferentialDriveOdometry;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Robot;
 import frc.robot.Constants.TankConstants;
+import frc.robot.subsystems.Tank.TankIOPhoenix6;
 
 public class TankSubsystem extends SubsystemBase{
     public static TankSubsystem m_instance;
@@ -24,6 +25,15 @@ public class TankSubsystem extends SubsystemBase{
     private double targetRPSRight = 0.;
     private double targetMpsLeft = 0.;
     private double targetMpsRight = 0.;
+    private double targetHeading = 0.0;
+    private PIDController turnPIDController;
+
+    private DifferentialDriveOdometry odometry;
+    private Pose2d currentPose = new Pose2d();
+
+    private boolean shouldMoveForward = true;
+    private Pose2d targetPose = new Pose2d();
+    private PIDController positionPID = new PIDController(0.05, 0, 0); // TUNE these values
 
     public TankSubsystem(){
         if(Robot.isReal()){
@@ -33,6 +43,25 @@ public class TankSubsystem extends SubsystemBase{
             //TODO: Implement simulation code here
             io = new TankIOPhoenix6();
         }
+        
+        // Init Turning PIDController
+        turnPIDController = new PIDController(
+            TankConstants.HeadlessControlConstants.TURN_K_P,
+            TankConstants.HeadlessControlConstants.TURN_K_I,
+            TankConstants.HeadlessControlConstants.TURN_K_D
+        );
+        
+        // Use 0..360 domain for headings
+        turnPIDController.enableContinuousInput(0.0, 360.0);//Input Range
+        turnPIDController.setTolerance(2.0); //容差
+        
+        // Use corrected heading for odometry initialization
+        odometry = new DifferentialDriveOdometry(
+            Rotation2d.fromDegrees(correctedHeadingDegrees()),
+            inputs.leftPositionMeters,
+            inputs.rightPositionMeters,
+            new Pose2d()
+        );
     }
 
     // Move
@@ -99,6 +128,87 @@ public class TankSubsystem extends SubsystemBase{
         io.setRightVoltage(voltage);
     }
 
+    // Turn
+    public void turnToHeading(double targetHeadingDegrees) {
+        // targetHeading is expressed in 0..360 degrees
+        targetHeading = MathUtil.inputModulus(targetHeadingDegrees, 0.0, 360.0);
+        double turnOutput = calculateTurnOutput();
+        setVelocity(turnOutput, -turnOutput);
+    }
+
+    private double calculateTurnOutput() {
+        // PID works with corrected heading
+        double output = turnPIDController.calculate(correctedHeadingDegrees(), targetHeading);
+        output = MathUtil.clamp(output, -TankConstants.K_TURN_MPS, TankConstants.K_TURN_MPS);
+        return output;
+    }
+
+    public boolean isAtTargetHeading() {
+        return turnPIDController.atSetpoint();
+    }
+
+    public boolean isAtTargetHeading(double tolerance) {
+        return Math.abs(turnPIDController.getPositionError()) < tolerance;
+    }
+
+    public double getTargetHeading() {
+        return targetHeading;
+    }
+
+    // Pigeon
+    public void resetHeading() {
+        io.resetHeading();
+        targetHeading = 0.0;
+        shouldMoveForward = true;
+        turnPIDController.reset();
+    }
+
+    public void setHeading(double heading) {
+        io.setHeading(heading);
+        targetHeading = heading;
+        turnPIDController.reset();
+    }
+
+    public double getHeading() {
+        // Return heading in 0..360 domain (after offset)
+        return correctedHeadingDegrees();
+    }
+
+    /**
+     * Returns the heading after applying the team-configurable offset so that
+     * the reported heading matches the coordinate frame expected by controls.
+     */
+    public double correctedHeadingDegrees() {
+        double raw = inputs.headingDegrees;
+        // Apply configured sensor offset then normalize into 0..360
+        double corrected = MathUtil.inputModulus(raw + TankConstants.HeadlessControlConstants.HEADING_OFFSET_DEGREES, 0.0, 360.0);
+        return corrected;
+    }
+
+    public double getPitch() {
+        return inputs.pitchDegrees;
+    }
+
+    public double getRoll() {
+        return inputs.rollDegrees;
+    }
+
+    public double getAngularVelocityZ() {
+        return inputs.angularVelocityZ;
+    }
+
+    public boolean isPigeonConnected() {
+        return inputs.pigeonConnected;
+    }
+
+    public Pose2d getPose(){ 
+        return currentPose; 
+    }
+    
+    public void resetOdometry(Pose2d pose){
+        odometry.resetPosition(Rotation2d.fromDegrees(correctedHeadingDegrees()), inputs.leftPositionMeters, inputs.rightPositionMeters, pose);
+        currentPose = pose;
+    }
 
     // driveControl
     //正常差速驱动
@@ -113,12 +223,82 @@ public class TankSubsystem extends SubsystemBase{
         setVelocityRight(rightMps);
     }
     
+    //无头模式移动
+    public void headlessMove(double speed) {
+        speed = MathUtil.clamp(speed, -TankConstants.K_MAX_SPEED_MPS, TankConstants.K_MAX_SPEED_MPS);
+        
+        
+        if (shouldMoveForward) {
+            setVelocity(speed, speed);
+        } else {
+            setVelocity(-speed, -speed);
+        }
+        
+    }
+    
+    //无头模式转向
+    public boolean headlessTurn(double targetAngle, boolean isLeftStickInput) {
+        double finalTargetAngle = targetAngle;
+        
+        if (isLeftStickInput) {
+            double currentHeading = getHeading();
+            double forwardAngleDiff = MathUtil.inputModulus(targetAngle - currentHeading, 0, 360.0);
+            double backwardAngleDiff = MathUtil.inputModulus((targetAngle + 180.0) - currentHeading, 0, 360.0);
+            
+            // 选择转向角度更小的路径
+            if (Math.abs(forwardAngleDiff) <= Math.abs(backwardAngleDiff)) {
+                finalTargetAngle = targetAngle;
+                shouldMoveForward = true;
+            } else {
+                finalTargetAngle = MathUtil.inputModulus(targetAngle + 180.0, 0.0, 360.0);
+                shouldMoveForward = false;
+            }
+        } else {
+            // 右摇杆输入时，默认前进
+            shouldMoveForward = true;
+        }
+        
+        turnToHeading(finalTargetAngle);
+        
+        return isAtTargetHeading(5.);
+    }
+
+    public void setTargetPoint(Pose2d target) {
+        this.targetPose = target;
+    }
+    
+    public boolean driveToPoint(Pose2d targetPose) {
+        setTargetPoint(targetPose);
+        Pose2d currentPose = getPose();
+        double distance = currentPose.getTranslation().getDistance(targetPose.getTranslation());
+        double angleToTarget = Math.toDegrees(Math.atan2(
+            targetPose.getTranslation().getY() - currentPose.getTranslation().getY(),
+            targetPose.getTranslation().getX() - currentPose.getTranslation().getX()
+        ));
+        
+        // First turn to face the target
+        if (!isAtTargetHeading(5.0)) {
+            turnToHeading(angleToTarget);
+            return false;
+        }
+        
+        // Then move towards target
+        double speed = MathUtil.clamp(
+            positionPID.calculate(0, distance),
+            -TankConstants.K_MAX_SPEED_MPS,
+            TankConstants.K_MAX_SPEED_MPS
+        );
+        
+        setVelocity(speed, speed);
+        
+        // Check if reached target
+        return distance < 0.1; // TUNE this tolerance
+    }
     
     //停止所有运动
     public void stop() {
         stopBoth();
     }
-
     public void stop(String side) {
         switch (side) {
             case "left":
@@ -135,10 +315,21 @@ public class TankSubsystem extends SubsystemBase{
                 break;
         }
     }
-        
+    
+
+    
+    
     @Override
     public void periodic() {
         io.updateInputs(inputs);
+        
+        // Update odometry with corrected heading
+        currentPose = odometry.update(
+            Rotation2d.fromDegrees(correctedHeadingDegrees()),
+            inputs.leftPositionMeters,
+            inputs.rightPositionMeters
+        );
+        
         processLog();
         processDashboard();
     }
@@ -151,6 +342,17 @@ public class TankSubsystem extends SubsystemBase{
         Logger.recordOutput("Tank/TargetMpsLeft", targetMpsLeft);
         Logger.recordOutput("Tank/TargetMpsRight", targetMpsRight);
         Logger.recordOutput("Tank/IsAtTargetMps", IsAtTargetMpsBoth());
+        
+        Logger.recordOutput("Tank/Heading", getHeading());
+        Logger.recordOutput("Tank/Pitch", getPitch());
+        Logger.recordOutput("Tank/Roll", getRoll());
+        Logger.recordOutput("Tank/AngularVelocityZ", getAngularVelocityZ());
+        Logger.recordOutput("Tank/PigeonConnected", isPigeonConnected());
+        Logger.recordOutput("Tank/TargetHeading", targetHeading);
+        Logger.recordOutput("Tank/TurnOutput", calculateTurnOutput());
+        Logger.recordOutput("Tank/IsAtTargetHeading", isAtTargetHeading());
+        
+        Logger.recordOutput("Tank/Pose", currentPose);
     }
 
     private void processDashboard(){

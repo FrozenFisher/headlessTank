@@ -6,8 +6,6 @@ package frc.robot;
 
 import com.ctre.phoenix6.signals.InvertedValue;
 
-import edu.wpi.first.units.measure.PerUnit;
-
 /**
  * The Constants class provides a convenient place for teams to hold robot-wide numerical or boolean
  * constants. This class should not be used for any other purpose. All constants should be declared
@@ -29,7 +27,7 @@ public final class Constants {
     public static final double K_I = 0.;
     public static final double K_D = 0.;
     public static final double K_V = 1.3;//TUNE!!
-    public static final double K_S = 0.26;
+    public static final double K_S = 0.254;
     public static final double TANK_RATIO = 10.;
     //TUNE!!若负责移动的电机有传动系统，新增对应传动比
     public static final InvertedValue LEFT_INVERTED = InvertedValue.Clockwise_Positive;
@@ -42,21 +40,25 @@ public final class Constants {
     //m/s control
     public static final double WHEEL_DIAMETER_METERS = 0.12; //TUNE!!轮径
     public static final double WHEEL_CIRCUMFERENCE_METERS = Math.PI * WHEEL_DIAMETER_METERS;
-    public static final double K_MAX_SPEED_MPS = 10.0; //TUNE!!最大线速度
+    public static final double K_MAX_SPEED_MPS = 7.0; //TUNE!!最大线速度
     public static final double TANK_VELOCITY_TOLERANCE_MPS = 0.05; // 速度到达容差(m/s)
 
     //TUNE!!手柄到目标速度(m/s)比例（前进与转向分量）
-    public static final double K_FWD_MPS = 3;
+    public static final double K_FWD_MPS = 1;
     public static final double K_TURN_MPS = 1.7;
     public static final double K_INPUT_POW = 3.;
 
-    public static final boolean USE_TANK_2910 = true; // 切换到TankLike2910风格
+    public static final boolean USE_TANK_2910 = false; // 切换到TankLike2910风格
 
     public static class HeadlessControlConstants {
-      public static final boolean USE_HEADLESS_CONTROL = false;
-      public static final double TURN_K_P = 4.;//TUNE!!
+      public static boolean USE_HEADLESS_CONTROL = true;
+      public static final double TURN_K_P = 0.02;//TUNE!!
       public static final double TURN_K_I = 0.;
       public static final double TURN_K_D = 0.;
+      // If your IMU (Pigeon) is mounted rotated, adjust this so headings reported
+      // by getHeading() align with the field frame used by the rest of the code.
+      // Positive values rotate the reported heading counter-clockwise.
+      public static final double HEADING_OFFSET_DEGREES = 0.0; // TUNE this (default assumes sensor is +90deg rotated)
     }
   }
   public static class LimelightConstants {
