@@ -227,7 +227,6 @@ public class TankSubsystem extends SubsystemBase{
     public void headlessMove(double speed) {
         speed = MathUtil.clamp(speed, -TankConstants.K_MAX_SPEED_MPS, TankConstants.K_MAX_SPEED_MPS);
         
-        
         if (shouldMoveForward) {
             setVelocity(speed, speed);
         } else {
@@ -245,16 +244,19 @@ public class TankSubsystem extends SubsystemBase{
             double forwardAngleDiff = MathUtil.inputModulus(targetAngle - currentHeading, 0, 360.0);
             double backwardAngleDiff = MathUtil.inputModulus((targetAngle + 180.0) - currentHeading, 0, 360.0);
             
-            // 选择转向角度更小的路径
+            
             if (Math.abs(forwardAngleDiff) <= Math.abs(backwardAngleDiff)) {
                 finalTargetAngle = targetAngle;
-                shouldMoveForward = true;
+                if (forwardAngleDiff > 5.){
+                  shouldMoveForward = true;
+                }
             } else {
+                if (backwardAngleDiff > 5.){
+                  shouldMoveForward = false;
+                }
                 finalTargetAngle = MathUtil.inputModulus(targetAngle + 180.0, 0.0, 360.0);
-                shouldMoveForward = false;
             }
         } else {
-            // 右摇杆输入时，默认前进
             shouldMoveForward = true;
         }
         
