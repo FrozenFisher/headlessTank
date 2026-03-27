@@ -44,17 +44,17 @@ public final class Constants {
     public static final double TANK_VELOCITY_TOLERANCE_MPS = 0.05; // 速度到达容差(m/s)
 
     //TUNE!!手柄到目标速度(m/s)比例（前进与转向分量）
-    public static final double K_FWD_MPS = 1;
+    public static final double K_FWD_MPS = 3.;
     public static final double K_TURN_MPS = 1.7;
     public static final double K_INPUT_POW = 3.;
 
     public static final boolean USE_TANK_2910 = false; // 切换到TankLike2910风格
 
     public static class HeadlessControlConstants {
-      public static boolean USE_HEADLESS_CONTROL = true;
-      public static final double TURN_K_P = 0.02;//TUNE!!
+
+      public static final double TURN_K_P = 0.026;//TUNE!!
       public static final double TURN_K_I = 0.;
-      public static final double TURN_K_D = 0.;
+      public static final double TURN_K_D = 0.0;
       // If your IMU (Pigeon) is mounted rotated, adjust this so headings reported
       // by getHeading() align with the field frame used by the rest of the code.
       // Positive values rotate the reported heading counter-clockwise.

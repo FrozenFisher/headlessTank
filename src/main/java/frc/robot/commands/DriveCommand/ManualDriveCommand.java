@@ -12,6 +12,9 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import frc.robot.Constants.TankConstants;
 import frc.robot.subsystems.Tank.TankSubsystem;
+
+import org.littletonrobotics.junction.Logger;
+
 import java.util.function.DoubleSupplier;
 
 import com.google.flatbuffers.Constants;
@@ -32,7 +35,15 @@ public class ManualDriveCommand extends Command {
     DRIVE_TO_POINT,
   }
 
-  TankState state;
+  public TankState state;
+
+  // Drive mode state machine: allows cycling between drive modes at runtime.
+  public enum DriveMode {
+    ARCADE,
+    HEADLESS
+  }
+
+  private DriveMode driveMode = DriveMode.ARCADE;
 
   Rotation2d currentHeading = new Rotation2d(0.);
   Pose2d targetPose = new Pose2d(0., 0., currentHeading);
@@ -47,6 +58,15 @@ public class ManualDriveCommand extends Command {
     leftStickYIn = () -> this.controller.getLeftY();
     rightStickXIn = () -> this.controller.getRightX();
     rightStickYIn = () -> this.controller.getRightY();
+  }
+
+  /** Toggle headless control mode (callable from RobotContainer). */
+  public void switchDriveMode() {
+    // Cycle the local drive mode state machine.
+    driveMode = (driveMode == DriveMode.HEADLESS) ? DriveMode.ARCADE : DriveMode.HEADLESS;
+    // Reset to STOP so the change takes effect cleanly.
+    state = TankState.STOP;
+    // Publish the new mode for dashboard/logging
   }
 
   @Override
@@ -66,6 +86,7 @@ public class ManualDriveCommand extends Command {
     double rightStickY =
         MathUtil.applyDeadband(rightStickYIn.getAsDouble(), TankConstants.K_DEADBAND);
 
+    Logger.recordOutput("Tank/State", state);
     switch (state) {
       case STOP:
         driveControl.stop();
@@ -73,7 +94,7 @@ public class ManualDriveCommand extends Command {
           // driveControl.stop();
           break;
         } else {
-          if (TankConstants.HeadlessControlConstants.USE_HEADLESS_CONTROL) {
+          if (driveMode == DriveMode.HEADLESS) {
             state = TankState.HEADLESS_TURN;
           } else {
             state = TankState.ARCADE_DRIVE_MOVE;
@@ -81,7 +102,7 @@ public class ManualDriveCommand extends Command {
         }
         break;
       case ARCADE_DRIVE_MOVE:
-        arcadeDriveMove(leftStickX, rightStickY);
+        arcadeDriveMove(leftStickY, rightStickX);
         break;
       case HEADLESS_TURN:
         headlessTurn(leftStickX, leftStickY, rightStickX, rightStickY);
@@ -109,6 +130,10 @@ public class ManualDriveCommand extends Command {
     return false;
   }
 
+  public TankState getStatus() {
+    return state;
+  }
+
   private void arcadeDriveMove(double forwardIn, double turnIn) {
     double forward = forwardIn;
     double turn = turnIn;
@@ -121,10 +146,15 @@ public class ManualDriveCommand extends Command {
 
     Translation2d stickVector = new Translation2d(leftX, leftY);
 
-    double stickAngle = MathUtil.inputModulus(stickVector.getAngle().getDegrees() - 90.0, 0.0, 360.0);
+  // Angle of stick relative to +Y axis (vector (0,1)). Use atan2(x, y).
+  double stickAngle = Math.toDegrees(Math.atan2(stickVector.getX(), stickVector.getY()));
+  stickAngle = MathUtil.inputModulus(stickAngle, 0.0, 360.0);
 
-    double currentHeading = driveControl.getHeading();
-    double angleDiff = stickAngle - currentHeading;
+  double currentHeading = driveControl.getHeading();
+  // Simple wrap handling: compute signed smallest difference in [-180,180]
+  // for the decision whether to enter turning state, but keep the
+  // target heading itself equal to stickAngle (no shortest-turn remapping).
+  double angleDiff = MathUtil.inputModulus(stickAngle - currentHeading, -180.0, 180.0);
     if (Math.abs(angleDiff) > 5.0) {
       state = TankState.HEADLESS_TURN;
       return;
@@ -144,15 +174,18 @@ public class ManualDriveCommand extends Command {
     Translation2d leftStickVector = new Translation2d(leftX, leftY);
     Translation2d rightStickVector = new Translation2d(rightX, rightY);
 
-    double targetAngle;
-    boolean hasValidInput = false;
-    boolean isLeftStickInput = false;
+  double targetAngle;
+  boolean isLeftStickInput = false;
 
     if (leftStickVector.getNorm() > TankConstants.K_DEADBAND) {
-      targetAngle = MathUtil.inputModulus(leftStickVector.getAngle().getDegrees() - 90., 0.0, 360.0);
+      // Angle relative to +Y axis
+      targetAngle = Math.toDegrees(Math.atan2(leftStickVector.getX(), leftStickVector.getY()));
+      targetAngle = MathUtil.inputModulus(targetAngle, 0.0, 360.0);
       isLeftStickInput = true;
     } else if (rightStickVector.getNorm() > TankConstants.K_DEADBAND) {
-      targetAngle = MathUtil.inputModulus(driveControl.getHeading() + Math.pow(rightY, 3.) * .5, 0.0, 360.0);
+      // Angle relative to +Y axis
+      targetAngle = Math.toDegrees(Math.atan2(rightStickVector.getX(), rightStickVector.getY()));
+      targetAngle = MathUtil.inputModulus(targetAngle, 0.0, 360.0);
       isLeftStickInput = false;
     } else {
       state = TankState.STOP;

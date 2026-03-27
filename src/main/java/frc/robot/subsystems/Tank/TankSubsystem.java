@@ -10,6 +10,7 @@ import edu.wpi.first.math.kinematics.DifferentialDriveOdometry;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Robot;
 import frc.robot.Constants.TankConstants;
+import frc.robot.commands.DriveCommand.ManualDriveCommand;
 import frc.robot.subsystems.Tank.TankIOPhoenix6;
 
 public class TankSubsystem extends SubsystemBase{
@@ -27,6 +28,8 @@ public class TankSubsystem extends SubsystemBase{
     private double targetMpsRight = 0.;
     private double targetHeading = 0.0;
     private PIDController turnPIDController;
+    private double sendedSpeed = 0.;
+
 
     private DifferentialDriveOdometry odometry;
     private Pose2d currentPose = new Pose2d();
@@ -131,7 +134,7 @@ public class TankSubsystem extends SubsystemBase{
     // Turn
     public void turnToHeading(double targetHeadingDegrees) {
         // targetHeading is expressed in 0..360 degrees
-        targetHeading = MathUtil.inputModulus(targetHeadingDegrees, 0.0, 360.0);
+        targetHeading = targetHeadingDegrees;
         double turnOutput = calculateTurnOutput();
         setVelocity(turnOutput, -turnOutput);
     }
@@ -157,7 +160,7 @@ public class TankSubsystem extends SubsystemBase{
 
     // Pigeon
     public void resetHeading() {
-        io.resetHeading();
+        io.setHeading(0.);;
         targetHeading = 0.0;
         shouldMoveForward = true;
         turnPIDController.reset();
@@ -181,7 +184,7 @@ public class TankSubsystem extends SubsystemBase{
     public double correctedHeadingDegrees() {
         double raw = inputs.headingDegrees;
         // Apply configured sensor offset then normalize into 0..360
-        double corrected = MathUtil.inputModulus(raw + TankConstants.HeadlessControlConstants.HEADING_OFFSET_DEGREES, 0.0, 360.0);
+        double corrected = raw + TankConstants.HeadlessControlConstants.HEADING_OFFSET_DEGREES;
         return corrected;
     }
 
@@ -226,7 +229,7 @@ public class TankSubsystem extends SubsystemBase{
     //无头模式移动
     public void headlessMove(double speed) {
         speed = MathUtil.clamp(speed, -TankConstants.K_MAX_SPEED_MPS, TankConstants.K_MAX_SPEED_MPS);
-        
+        sendedSpeed = speed;
         if (shouldMoveForward) {
             setVelocity(speed, speed);
         } else {
@@ -240,26 +243,28 @@ public class TankSubsystem extends SubsystemBase{
         double finalTargetAngle = targetAngle;
         
         if (isLeftStickInput) {
-            double currentHeading = getHeading();
-            double forwardAngleDiff = MathUtil.inputModulus(targetAngle - currentHeading, 0, 360.0);
-            double backwardAngleDiff = MathUtil.inputModulus((targetAngle + 180.0) - currentHeading, 0, 360.0);
-            
-            
-            if (Math.abs(forwardAngleDiff) <= Math.abs(backwardAngleDiff)) {
-                finalTargetAngle = targetAngle;
-                if (forwardAngleDiff > 5.){
-                  shouldMoveForward = true;
-                }
-            } else {
-                if (backwardAngleDiff > 5.){
-                  shouldMoveForward = false;
-                }
-                finalTargetAngle = MathUtil.inputModulus(targetAngle + 180.0, 0.0, 360.0);
-            }
+            // 注释掉最短转向角度的计算，直接转向 stick 指向的角度
+            // double currentHeading = getHeading();
+            // double forwardAngleDiff = MathUtil.inputModulus(targetAngle, 0., 360.) - currentHeading;
+            // double backwardAngleDiff = MathUtil.inputModulus(targetAngle+180., 0., 360.)  - currentHeading;
+            // if (Math.abs(forwardAngleDiff) <= Math.abs(backwardAngleDiff)) {
+            //     finalTargetAngle = targetAngle;
+            //     if (forwardAngleDiff > 10.){
+            //         shouldMoveForward = true;
+            //     }
+            // } else {
+            //     if (backwardAngleDiff > 10.){
+            //         shouldMoveForward = false;
+            //     }
+            //     finalTargetAngle = MathUtil.inputModulus(targetAngle+180., 0., 360.) ;
+            // }
+            finalTargetAngle = targetAngle;
+            shouldMoveForward = true;
         } else {
             shouldMoveForward = true;
         }
-        
+
+        // 直接转向 stick 指向的角度
         turnToHeading(finalTargetAngle);
         
         return isAtTargetHeading(5.);
@@ -353,7 +358,9 @@ public class TankSubsystem extends SubsystemBase{
         Logger.recordOutput("Tank/TargetHeading", targetHeading);
         Logger.recordOutput("Tank/TurnOutput", calculateTurnOutput());
         Logger.recordOutput("Tank/IsAtTargetHeading", isAtTargetHeading());
-        
+        Logger.recordOutput("Tank/shouldMoveForward", shouldMoveForward);
+        Logger.recordOutput("Tank/Speed", sendedSpeed);
+
         Logger.recordOutput("Tank/Pose", currentPose);
     }
 

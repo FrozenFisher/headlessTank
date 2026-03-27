@@ -24,6 +24,7 @@ public class RobotContainer {
   //     new CommandXboxController(1);
 
   private final TankSubsystem m_tank = TankSubsystem.getInstance();
+  private final ManualDriveCommand m_manualDrive;
   //private final IntakerSubsystem m_intake = IntakerSubsystem.getInstance();
   // private final frc.robot.subsystems.TankLike2910.TankSubsystem m_tank2910;
 
@@ -33,9 +34,9 @@ public class RobotContainer {
     
     // Configure the trigger bindings
     
-    m_tank.setDefaultCommand(
-      new ManualDriveCommand(m_driverController, m_tank)
-    );
+  // Create a single ManualDriveCommand instance so we can call its methods from bindings
+  this.m_manualDrive = new ManualDriveCommand(m_driverController, m_tank);
+  m_tank.setDefaultCommand(this.m_manualDrive);
 
     // m_tank2910 = frc.robot.subsystems.TankLike2910.TankSubsystem.getInstance(m_driverController);
 
@@ -65,8 +66,8 @@ public class RobotContainer {
     // m_driverController2.rightTrigger().whileTrue(new IntakeCommand(m_intake));
     // m_driverController2.leftTrigger().whileTrue(new OuttakeCommand(m_intake));
 
-    m_driverController.b().onTrue(new InstantCommand(() -> m_tank.resetHeading()));
-    //m_driverController.x().onTrue(new InstantCommand(() -> Constants.TankConstants.HeadlessControlConstants.USE_HEADLESS_CONTROL = Constants.TankConstants.HeadlessControlConstants.USE_HEADLESS_CONTROL == true ? false : true));
+  m_driverController.b().onTrue(new InstantCommand(() -> m_tank.resetHeading()));
+  m_driverController.x().onTrue(new InstantCommand(() -> m_manualDrive.switchDriveMode()));
 
 
   }
