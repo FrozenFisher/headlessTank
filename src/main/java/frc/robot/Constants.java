@@ -52,7 +52,7 @@ public final class Constants {
 
     public static class HeadlessControlConstants {
 
-      public static final double TURN_K_P = 0.026;//TUNE!!
+      public static final double TURN_K_P = 0.022;//TUNE!!
       public static final double TURN_K_I = 0.;
       public static final double TURN_K_D = 0.0;
       // If your IMU (Pigeon) is mounted rotated, adjust this so headings reported
