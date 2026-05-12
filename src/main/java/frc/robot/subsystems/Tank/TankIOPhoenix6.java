@@ -2,6 +2,7 @@ package frc.robot.subsystems.Tank;
 
 import com.ctre.phoenix6.BaseStatusSignal;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
+import com.ctre.phoenix6.controls.MotionMagicVoltage;
 import com.ctre.phoenix6.controls.VelocityVoltage;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.hardware.Pigeon2;
@@ -11,13 +12,11 @@ import frc.robot.Constants.TankConstants;
 public class TankIOPhoenix6 implements TankIO{
     private static final TalonFX leftMotor = new TalonFX(TankConstants.TANK_LEFT_MOTOR_ID, "rio");
     private static final TalonFX rightMotor = new TalonFX(TankConstants.TANK_RIGHT_MOTOR_ID, "rio");
-    private static final Pigeon2 pigeon = new Pigeon2(TankConstants.TANK_PIGEON_ID, "rio");
 
     private static final VelocityVoltage dutycycle = new VelocityVoltage(0);
 
     public TankIOPhoenix6(){
         motorConfig();
-        pigeonConfig();
     }
     
     public void motorConfig(){
@@ -43,12 +42,6 @@ public class TankIOPhoenix6 implements TankIO{
         );
     }
 
-    public void pigeonConfig(){
-        BaseStatusSignal.setUpdateFrequencyForAll(
-            50.0,
-            pigeon.getYaw(), pigeon.getPitch(), pigeon.getRoll(), pigeon.getAngularVelocityZWorld()
-        );
-    }
     
     @Override
     public void setLeftVoltage(double leftVoltage) {
@@ -105,16 +98,6 @@ public class TankIOPhoenix6 implements TankIO{
     }
 
     @Override
-    public void resetHeading() {
-        pigeon.reset();
-    }
-
-    @Override
-    public void setHeading(double heading) {
-        pigeon.setYaw(heading);
-    }
-
-    @Override
     public void resetWheelPositions(){
         leftMotor.setPosition(0);
         rightMotor.setPosition(0);
@@ -136,12 +119,6 @@ public class TankIOPhoenix6 implements TankIO{
             rightMotor.getPosition(),
             rightMotor.getDeviceTemp()
         ).isOK();
-        inputs.pigeonConnected = BaseStatusSignal.refreshAll(
-            pigeon.getYaw(),
-            pigeon.getPitch(),
-            pigeon.getRoll(),
-            pigeon.getAngularVelocityZWorld()
-        ).isOK();
         
         inputs.leftVoltageVolts = leftMotor.getMotorVoltage().getValueAsDouble();
         inputs.rightVoltageVolts = rightMotor.getMotorVoltage().getValueAsDouble();
@@ -151,17 +128,12 @@ public class TankIOPhoenix6 implements TankIO{
 		inputs.leftVelocityRPS = leftMotor.getVelocity().getValueAsDouble();
 		inputs.rightVelocityRPS = rightMotor.getVelocity().getValueAsDouble();
 		inputs.leftVelocityMps = inputs.leftVelocityRPS * TankConstants.TANK_RATIO * TankConstants.WHEEL_CIRCUMFERENCE_METERS;
-		inputs.rightVelocityMps = inputs.rightVelocityRPS * TankConstants.TANK_RATIO * TankConstants.WHEEL_CIRCUMFERENCE_METERS;//若负责移动的电机有传动系统，填入传动比
+		inputs.rightVelocityMps = inputs.rightVelocityRPS * TankConstants.TANK_RATIO * TankConstants.WHEEL_CIRCUMFERENCE_METERS;
 		
 		double leftRotations = leftMotor.getPosition().getValueAsDouble();
 		double rightRotations = rightMotor.getPosition().getValueAsDouble();
 		inputs.leftPositionMeters = leftRotations * TankConstants.WHEEL_CIRCUMFERENCE_METERS * TankConstants.TANK_RATIO;
 		inputs.rightPositionMeters = rightRotations * TankConstants.WHEEL_CIRCUMFERENCE_METERS * TankConstants.TANK_RATIO;
 
-		// Pigeon姿态
-		inputs.headingDegrees = pigeon.getYaw().getValueAsDouble();
-		inputs.pitchDegrees = pigeon.getPitch().getValueAsDouble();
-		inputs.rollDegrees = pigeon.getRoll().getValueAsDouble();
-		inputs.angularVelocityZ = pigeon.getAngularVelocityZWorld().getValueAsDouble();
 	}
 }

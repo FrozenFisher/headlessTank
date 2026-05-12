@@ -48,6 +48,9 @@ public final class Constants {
     public static final double K_TURN_MPS = 1.7;
     public static final double K_INPUT_POW = 3.;
 
+    /** Arcade 模式左右轮目标速度斜率限制 (m/s 每秒)，防止遥操作猛推杆 */
+    public static final double K_ARCADE_SLEW_RATE_MPS_PER_SEC = 0.5;
+
     public static final boolean USE_TANK_2910 = false; // 切换到TankLike2910风格
 
     public static class HeadlessControlConstants {
