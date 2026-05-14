@@ -38,12 +38,12 @@ public class ManualDriveCommand extends Command {
   @Override
   public void execute() {
 
-    double leftStickXIn = MathUtil.applyDeadband(leftStickX.getAsDouble(), TankConstants.K_DEADBAND);
-    double leftStickYIn = MathUtil.applyDeadband(leftStickY.getAsDouble(), TankConstants.K_DEADBAND);
-    double rightStickXIn = MathUtil.applyDeadband(rightStickX.getAsDouble(), TankConstants.K_DEADBAND);
-    double rightStickYIn = MathUtil.applyDeadband(rightStickY.getAsDouble(), TankConstants.K_DEADBAND);
-    double forward = Math.signum(leftStickYIn) * Math.pow(Math.abs(leftStickYIn), TankConstants.K_INPUT_POW);
-    double turn = Math.signum(rightStickXIn) * Math.pow(Math.abs(rightStickXIn), TankConstants.K_INPUT_POW);
+    double leftStickXIn = MathUtil.applyDeadband(leftStickX.getAsDouble(), TankConstants.kDeadBand);
+    double leftStickYIn = MathUtil.applyDeadband(leftStickY.getAsDouble(), TankConstants.kDeadBand);
+    double rightStickXIn = MathUtil.applyDeadband(rightStickX.getAsDouble(), TankConstants.kDeadBand);
+    double rightStickYIn = MathUtil.applyDeadband(rightStickY.getAsDouble(), TankConstants.kDeadBand);
+    double forward = Math.signum(leftStickYIn) * Math.pow(Math.abs(leftStickYIn), TankConstants.kInputPow);
+    double turn = Math.signum(rightStickXIn) * Math.pow(Math.abs(rightStickXIn), TankConstants.kInputPow);
     driveControl.arcadedrive(-forward, -turn);
   }
 

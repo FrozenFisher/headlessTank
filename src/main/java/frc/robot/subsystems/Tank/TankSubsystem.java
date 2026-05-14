@@ -27,9 +27,9 @@ public class TankSubsystem extends SubsystemBase{
     private double targetMpsRight = 0.;
 
     private final SlewRateLimiter arcadeLeftSlew =
-            new SlewRateLimiter(TankConstants.K_ARCADE_SLEW_RATE_MPS_PER_SEC);
+            new SlewRateLimiter(TankConstants.kArcadeSlewRateMPS);
     private final SlewRateLimiter arcadeRightSlew =
-            new SlewRateLimiter(TankConstants.K_ARCADE_SLEW_RATE_MPS_PER_SEC);
+            new SlewRateLimiter(TankConstants.kArcadeSlewRateMPS);
 
     public TankSubsystem(){
         if(Robot.isReal()){
@@ -74,19 +74,19 @@ public class TankSubsystem extends SubsystemBase{
     }
     
     public boolean IsAtTargetRPSLeft(){
-        return MathUtil.isNear(targetRPSLeft, inputs.leftVelocityRPS, TankConstants.TANK_VELOCITY_TOLERANCE_RPS);
+        return MathUtil.isNear(targetRPSLeft, inputs.leftVelocityRPS, TankConstants.TankVelocityToleranceRPS);
     }
     public boolean IsAtTargetRPSRight(){
-        return MathUtil.isNear(targetRPSRight, inputs.rightVelocityRPS, TankConstants.TANK_VELOCITY_TOLERANCE_RPS);
+        return MathUtil.isNear(targetRPSRight, inputs.rightVelocityRPS, TankConstants.TankVelocityToleranceRPS);
     }
     public boolean IsAtTargetRPSBoth(){
         return IsAtTargetRPSLeft() && IsAtTargetRPSRight();
     }
     public boolean IsAtTargetMpsLeft(){
-        return MathUtil.isNear(targetMpsLeft, inputs.leftVelocityMps, TankConstants.TANK_VELOCITY_TOLERANCE_MPS);
+        return MathUtil.isNear(targetMpsLeft, inputs.leftVelocityMps, TankConstants.TankVelocityToleranceMPS);
     }
     public boolean IsAtTargetMpsRight(){
-        return MathUtil.isNear(targetMpsRight, inputs.rightVelocityMps, TankConstants.TANK_VELOCITY_TOLERANCE_MPS);
+        return MathUtil.isNear(targetMpsRight, inputs.rightVelocityMps, TankConstants.TankVelocityToleranceMPS);
     }
     public boolean IsAtTargetMpsBoth(){
         return IsAtTargetMpsLeft() && IsAtTargetMpsRight();
@@ -113,11 +113,11 @@ public class TankSubsystem extends SubsystemBase{
     // driveControl
     //正常差速驱动
     public void arcadedrive(double forward, double turn) {
-        double leftMps = forward * TankConstants.K_FWD_MPS + turn * TankConstants.K_TURN_MPS;
-        double rightMps = forward * TankConstants.K_FWD_MPS - turn * TankConstants.K_TURN_MPS;
+        double leftMps = forward * TankConstants.kForwardMPS + turn * TankConstants.kTurnMPS;
+        double rightMps = forward * TankConstants.kForwardMPS - turn * TankConstants.kTurnMPS;
 
-        leftMps = MathUtil.clamp(leftMps, -TankConstants.K_MAX_SPEED_MPS, TankConstants.K_MAX_SPEED_MPS);
-        rightMps = MathUtil.clamp(rightMps, -TankConstants.K_MAX_SPEED_MPS, TankConstants.K_MAX_SPEED_MPS);
+        leftMps = MathUtil.clamp(leftMps, -TankConstants.kMaxSpeedMPS, TankConstants.kMaxSpeedMPS);
+        rightMps = MathUtil.clamp(rightMps, -TankConstants.kMaxSpeedMPS, TankConstants.kMaxSpeedMPS);
 
         leftMps = arcadeLeftSlew.calculate(leftMps);
         rightMps = arcadeRightSlew.calculate(rightMps);
