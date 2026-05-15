@@ -50,10 +50,10 @@ public final class Constants {
     public static final double TankVelocityToleranceMPS = 0.05;
 
     // TUNE!!
-    public static final double kForwardMPS = 3.;
-    public static final double kTurnMPS = 1.7;
-    public static final double kInputPow = 3.;
+    public static final double kForwardMPS = 1.5;
+    public static final double kTurnMPS = 0.4;
+    public static final double kInputPow = 1.;
 
-    public static final double kArcadeSlewRateMPS = 0.5;
+    public static final double kArcadeSlewRateMPS = 0.8;
   }
 }
