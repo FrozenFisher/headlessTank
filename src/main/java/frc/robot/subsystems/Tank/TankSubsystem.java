@@ -21,6 +21,7 @@ public class TankSubsystem extends SubsystemBase {
   private double targetRPSRight = 0.;
   private double targetMpsLeft = 0.;
   private double targetMpsRight = 0.;
+  private String isTurningTo = "Stopped";
 
   private final SlewRateLimiter arcadeForwardSlew =
       new SlewRateLimiter(TankConstants.kArcadeSlewRateMPS);
@@ -180,5 +181,29 @@ public class TankSubsystem extends SubsystemBase {
 
   private void processDashboard() {
     // TODO: Implement dashboard code here
+  }
+
+
+
+  public void IsTurningTo() {
+    if (inputs.leftVelocityMps > 0 && inputs.rightVelocityMps > 0){
+      if (inputs.leftVelocityMps > inputs.rightVelocityMps) {
+        Logger.recordOutput("Tank/IsTurning", "Left");
+        isTurningTo = "Left";
+      } else if (inputs.leftVelocityMps < inputs.rightVelocityMps) {
+        Logger.recordOutput("Tank/IsTurning", "Right");
+        isTurningTo = "Right";
+      } else {
+        Logger.recordOutput("Tank/IsTurning", "Straight");
+        isTurningTo = "Straight";
+      }
+    }else
+    {
+      Logger.recordOutput("Tank/IsTurning", "Stopped");
+      isTurningTo = "Stopped";
+    }
+  }
+  public String getIsTurningTo() {
+    return isTurningTo;
   }
 }
