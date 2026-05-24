@@ -6,6 +6,11 @@ package frc.robot;
 
 import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.MotorAlignmentValue;
+import edu.wpi.first.networktables.BooleanSubscriber;
+import edu.wpi.first.wpilibj.LEDPattern;
+import edu.wpi.first.wpilibj.util.Color;
+import dev.doglog.DogLog;
+
 
 /**
  * The Constants class provides a convenient place for teams to hold robot-wide numerical or boolean
@@ -56,4 +61,39 @@ public final class Constants {
 
     public static final double kArcadeSlewRateMPS = 0.8;
   }
+
+
+  public static class Ports {
+    public static class LED {
+      public static final int LED_PWM_PORT = 9;
+    }
+  }
+
+  public static class Settings {
+    public static class LED {
+      public static final int LED_LENGTH = 60;
+      public static final int[] TANK_BUFFER = {0, 60};
+
+    }
+      
+        public interface LEDs {
+
+        // TODO: Get actual length of led, along with length of individual sections
+        int LED_LENGTH = 60;
+
+
+        
+
+        // LED Pattern
+        
+        LEDPattern DISABLED = LEDPattern.solid(Color.kPurple);
+        LEDPattern TURNING_LEFT = LEDPattern.rainbow(255, 255);
+        LEDPattern TURNING_RIGHT = LEDPattern.rainbow(255, 255);
+        LEDPattern FORWARD =  LEDPattern.gradient(LEDPattern.GradientType.kContinuous, Color.kRed, Color.kBlue);
+        LEDPattern STOPPED = LEDPattern.solid(Color.kPurple);
+    }
+
+  }
+
+
 }
