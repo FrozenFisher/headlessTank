@@ -9,13 +9,18 @@ import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import frc.robot.Constants.OperatorConstants;
 import frc.robot.commands.DriveCommand.ManualDriveCommand;
+import frc.robot.commands.leds.LEDDefaultCommand;
 import frc.robot.subsystems.Tank.TankSubsystem;
+import frc.robot.subsystems.leds.LEDController;
 
 public class RobotContainer {
   // private final TankSubsystem m_tank = new TankSubsystem();
 
   private final CommandXboxController m_driverController =
       new CommandXboxController(OperatorConstants.kDriverControllerPort);
+  private final LEDController m_LedController = LEDController.getInstance();
+
+  
   // private final CommandXboxController m_operatorController2 =
   //     new CommandXboxController(1);
 
@@ -39,7 +44,9 @@ public class RobotContainer {
             () -> m_driverController.getRightX(),
             () -> m_driverController.getRightY(),
             m_tank));
-            
+
+
+    m_LedController.setDefaultCommand(new LEDDefaultCommand(m_LedController).ignoringDisable(true));
   }
 
   private void configureBindings() {
@@ -56,6 +63,8 @@ public class RobotContainer {
     // m_driverController2.rightTrigger().whileTrue(new IntakeCommand(m_intake));
     // m_driverController2.leftTrigger().whileTrue(new OuttakeCommand(m_intake));
   }
+
+    
 
   /** Autonomous 未配置，返回 null。 */
   public Command getAutonomousCommand() {

@@ -75,30 +75,13 @@ public final class Constants {
       public static final int[] TANK_BUFFER = {0, 60};
 
     }
-
-    public interface EnabledSubsystems {
-
-          BooleanSubscriber FEEDER = DogLog.tunable("Enabled Subsystems/Feeder", false);
-
-          BooleanSubscriber INTAKE = DogLog.tunable("Enabled Subsystems/Intake", true);
-
-          BooleanSubscriber LED = DogLog.tunable("Enabled Subsystems/LED", false);
-
-          BooleanSubscriber HANDOFF = DogLog.tunable("Enabled Subsystems/Handoff", false);
-
-          BooleanSubscriber SHOOTER = DogLog.tunable("Enabled Subsystems/Shooter", false);
-
-          BooleanSubscriber VISION = DogLog.tunable("Enabled Subsystems/Vision", false);
-
-          BooleanSubscriber SWERVE = DogLog.tunable("Enabled Subsystems/Swerve", false);
-        }
       
         public interface LEDs {
 
         // TODO: Get actual length of led, along with length of individual sections
         int LED_LENGTH = 60;
 
-        // Buffer Views {Starting Index, Ending Index}
+
         
 
         // LED Pattern

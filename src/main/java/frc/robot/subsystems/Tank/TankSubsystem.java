@@ -186,11 +186,11 @@ public class TankSubsystem extends SubsystemBase {
 
 
   public void IsTurningTo() {
-    if (inputs.leftVelocityMps > 0 && inputs.rightVelocityMps > 0){
-      if (inputs.leftVelocityMps > inputs.rightVelocityMps) {
+    if (targetMpsLeft > 0 && targetMpsRight > 0){
+      if (targetMpsLeft > targetMpsRight) {
         Logger.recordOutput("Tank/IsTurning", "Left");
         isTurningTo = "Left";
-      } else if (inputs.leftVelocityMps < inputs.rightVelocityMps) {
+      } else if (targetMpsLeft < targetMpsRight) {
         Logger.recordOutput("Tank/IsTurning", "Right");
         isTurningTo = "Right";
       } else {

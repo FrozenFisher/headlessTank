@@ -7,39 +7,38 @@ package frc.robot.subsystems.leds;
 
 import frc.robot.Constants.Ports;
 import frc.robot.Constants.Settings;
+import frc.robot.Constants.Ports.LED;
+import frc.robot.subsystems.Tank.TankSubsystem;
 import edu.wpi.first.wpilibj.AddressableLED;
 import edu.wpi.first.wpilibj.AddressableLEDBuffer;
-import edu.wpi.first.wpilibj.AddressableLEDBufferView;
 import edu.wpi.first.wpilibj.LEDPattern;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
 public class LEDController extends SubsystemBase {
 
-    private static final LEDController instance;
-
-    private final LEDPattern defaultPattern = LEDPattern.kOff;
-
-    private AddressableLED led;
-
-    private AddressableLEDBuffer buffer;
-
-    static {
-        instance = new LEDController();
+    private static LEDController instance;
+    
+        private final LEDPattern defaultPattern = Settings.LEDs.DISABLED;
+    
+        private AddressableLED led;
+    
+        private AddressableLEDBuffer buffer;
+    
+    
+    
+        public static LEDController getInstance() {
+                return instance == null ? instance = new LEDController() : instance;
     }
 
-    public static LEDController getInstance() {
-        return instance;
-    }
-
-    protected LEDController() {
+    private LEDController() {
         this.led = new AddressableLED(Ports.LED.LED_PWM_PORT);
         this.buffer = new AddressableLEDBuffer(Settings.LED.LED_LENGTH);
         led.setLength(buffer.getLength());
         led.setData(buffer);
         led.start();
-
-        applyPattern(defaultPattern);
+        
+        applyAll(defaultPattern);
         SmartDashboard.putData(instance);
     }
 
@@ -55,9 +54,8 @@ public class LEDController extends SubsystemBase {
 
     @Override
     public void periodic() {
-        if (!Settings.EnabledSubsystems.LED.get()) {
-            LEDPattern.kOff.applyTo(buffer);
-        }
+        // NOTE: Settings.EnabledSubsystems is not defined in Constants.java.
+        // Always update the LED hardware from the current buffer so default/command patterns work.
         led.setData(buffer);
     }
 }
